@@ -38,30 +38,6 @@ class Ai extends Library {
 		);
 	}
 
-	public function get_cached_usage() {
-		$cache_key = 'elementor_ai_usage';
-		$cache_time = 24 * HOUR_IN_SECONDS;
-		$usage = get_site_transient( $cache_key );
-
-		if ( ! $usage ) {
-			$usage = $this->get_usage();
-			set_site_transient( $cache_key, $usage, $cache_time );
-		}
-
-		return $usage;
-	}
-
-	public function get_remote_config() {
-		return $this->ai_request(
-			'GET',
-			'remote-config/config',
-			[
-				'api_version' => ELEMENTOR_VERSION,
-				'site_lang' => get_bloginfo( 'language' ),
-			]
-		);
-	}
-
 	/**
 	 * get_file_payload
 	 * @param $filename
@@ -117,7 +93,7 @@ class Ai extends Library {
 		return $payload;
 	}
 
-	private function ai_request( $method, $endpoint, $body, $file = false, $file_name = '', $format = 'default' ) {
+	private function ai_request( $method, $endpoint, $body, $file = false, $file_name = '' ) {
 		$headers = [
 			'x-elementor-ai-version' => '2',
 		];
@@ -127,9 +103,6 @@ class Ai extends Library {
 			$body = $this->get_upload_request_body( $body, $file, $boundary, $file_name );
 			// add content type header
 			$headers['Content-Type'] = 'multipart/form-data; boundary=' . $boundary;
-		} elseif ( 'json' === $format ) {
-			$headers['Content-Type'] = 'application/json';
-			$body = wp_json_encode( $body );
 		}
 
 		return $this->http_request(
@@ -139,7 +112,6 @@ class Ai extends Library {
 				'timeout' => 100,
 				'headers' => $headers,
 				'body' => $body,
-
 			],
 			[
 				'return_type' => static::HTTP_RETURN_TYPE_ARRAY,
@@ -505,76 +477,26 @@ class Ai extends Library {
 		return $result;
 	}
 
-	public function generate_layout( $data, $context ) {
-		$endpoint = 'generate/layout';
-
-		$body = [
-			'prompt' => $data['prompt'],
-			'variationType' => (int) $data['variationType'],
-		];
-
-		if ( ! empty( $data['prevGeneratedIds'] ) ) {
-			$body['generatedBaseTemplatesIds'] = $data['prevGeneratedIds'];
-		}
-
-		if ( ! empty( $data['attachments'] ) ) {
-			$attachment = $data['attachments'][0];
-
-			switch ( $attachment['type'] ) {
-				case 'json':
-					$endpoint = 'generate/generate-json-variation';
-
-					$body['json'] = [
-						'type' => 'elementor',
-						'elements' => [ $attachment['content'] ],
-					];
-					break;
-				case 'url':
-					$endpoint = 'generate/html-to-elementor';
-
-					$html = wp_json_encode( $attachment['content'] );
-
-					$body['html'] = $html;
-
-					break;
-			}
-		}
-
-		$context['currentContext'] = $data['currentContext'];
-
-		$metadata = [
-			'context' => $context,
-			'api_version' => ELEMENTOR_VERSION,
-			'site_lang' => get_bloginfo( 'language' ),
-			'config' => [
-				'generate' => [
-					'all' => true,
-				],
-			],
-		];
-
-		$body = array_merge( $body, $metadata );
-
-		// Temp hack for platforms that filters the http_request_args, and it breaks JSON requests.
-		remove_all_filters( 'http_request_args' );
-
+	public function generate_layout( $prompt, $context, $variation_type ) {
 		return $this->ai_request(
 			'POST',
-			$endpoint,
-			$body,
-			false,
-			'',
-			'json'
+			'generate/layout',
+			[
+				'prompt' => $prompt,
+				'context' => $context ?? [],
+				'api_version' => ELEMENTOR_VERSION,
+				'site_lang' => get_bloginfo( 'language' ),
+				'variationType' => (int) $variation_type,
+			]
 		);
 	}
 
-	public function get_layout_prompt_enhanced( $prompt, $enhance_type, $context ) {
+	public function get_layout_prompt_enhanced( $prompt, $context = [] ) {
 		return $this->ai_request(
 			'POST',
 			'generate/enhance-prompt',
 			[
 				'prompt' => $prompt,
-				'enhance_type' => $enhance_type,
 				'context' => wp_json_encode( $context ),
 				'api_version' => ELEMENTOR_VERSION,
 				'site_lang' => get_bloginfo( 'language' ),

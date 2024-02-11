@@ -734,14 +734,6 @@ abstract class Document extends Controls_Stack {
 	 */
 	public function save( $data ) {
 		/**
-		 * Set locale to "C" to avoid issues with comma as decimal separator.
-		 *
-		 * @see https://github.com/elementor/elementor/issues/10992
-		 */
-		$original_lc = setlocale( LC_NUMERIC, 0 );
-		setlocale( LC_NUMERIC, 'C' );
-
-		/**
 		 * Document save data.
 		 *
 		 * Filter the document data before saving process starts.
@@ -821,8 +813,6 @@ abstract class Document extends Controls_Stack {
 		$this->set_is_saving( false );
 
 		$this->remove_handle_revisions_changed_filter();
-
-		setlocale( LC_NUMERIC, $original_lc );
 
 		return true;
 	}

@@ -616,24 +616,19 @@ class Admin extends App {
 			],
 		];
 
-		$additions_actions = [];
+		$additions_actions = [
+			'go-pro' => [
+				'title' => esc_html__( 'Upgrade', 'elementor' ),
+				'link' => 'https://go.elementor.com/go-pro-wp-overview-widget/',
+			],
+		];
 
-		if ( User::get_introduction_meta( 'ai_get_started' ) ) {
-			$additions_actions['ai-library'] = [
-				'title' => esc_html__( 'AI Prompts Library', 'elementor' ),
-				'link' => 'https://go.elementor.com/overview-ai-prompts-library/',
-			];
-		} else {
+		if ( ! User::get_introduction_meta( 'ai_get_started' ) ) {
 			$additions_actions['ai'] = [
 				'title' => esc_html__( 'Build Smart with AI', 'elementor' ),
 				'link' => 'https://go.elementor.com/overview-widget-ai/',
 			];
 		}
-
-		$additions_actions['go-pro'] = [
-			'title' => esc_html__( 'Upgrade', 'elementor' ),
-			'link' => 'https://go.elementor.com/go-pro-wp-overview-widget/',
-		];
 
 		/**
 		 * Dashboard widget footer actions.

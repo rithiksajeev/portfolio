@@ -616,8 +616,6 @@ class Module extends BaseModule {
 			}
 		}
 
-		$usage = apply_filters( 'elementor/system-info/usage/settings', $usage );
-
 		return $usage;
 	}
 
